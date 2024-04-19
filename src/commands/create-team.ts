@@ -2,6 +2,17 @@ import {CommandInteraction, SlashCommandBuilder} from "discord.js";
 
 import fs from "fs/promises";
 
+// get_hints (groupnum)
+/*
+  Points: 10
+  Unlocked groups: group1, group3
+  1 - ???
+  2 - ? hint
+  3 - 10 - ivykdytas (hint)
+  4 - ???
+  5 - ???
+ */
+
 export const data = new SlashCommandBuilder()
     .setName('create_team')
     .setDescription('Creates a team with a specified name')
@@ -13,10 +24,24 @@ type Team = {
     points: number;
     locations_found: Array<string>;
     unlocked_groups: Array<string>;
+    current_hints: Array<string>;
 }
 
 type Teams = {
     teams: Array<Team>
+}
+
+type Location = {
+    id: string;
+    name: string;
+    points: number;
+    hint: string;
+    answer: string;
+}
+
+type Group = {
+    locations: Array<Location>;
+    amount_of_locations: number;
 }
 
 export async function execute(interaction: CommandInteraction) {
@@ -36,24 +61,34 @@ export async function execute(interaction: CommandInteraction) {
 
             const randomGroup = `group${Math.floor(Math.random() * 6) + 1}`
 
-            jsonData.teams.push({
-                owner_id: interaction.user.id,
-                team_name: interaction.options.data[0].value as string,
-                points: 0,
-                locations_found: [],
-                unlocked_groups: [ randomGroup ]
-            })
+            fs.readFile("./src/data/locations.json")
+                .then((data) => {
+                    const locationsJson = JSON.parse(data.toString())
+                    const randomLocation = Math.floor(Math.random() * locationsJson[randomGroup].amount_of_locations as number)
 
-            fs.writeFile("./src/data/teams.json", JSON.stringify(jsonData))
-                .then(() => {
-                    return interaction.reply({ content: "Created a team", ephemeral: true })
-                })
-                .catch(() => {
-                    return interaction.reply({ content: "An error has occured while creating a team", ephemeral: true })
+                    console.log(locationsJson[randomGroup].locations[randomLocation].hint)
+
+                    jsonData.teams.push({
+                        owner_id: interaction.user.id,
+                        team_name: interaction.options.data[0].value as string,
+                        points: 0,
+                        locations_found: [],
+                        unlocked_groups: [ randomGroup ],
+                        current_hints: [ `${randomGroup}_${randomLocation + 1}` ]
+                    })
+
+                    fs.writeFile("./src/data/teams.json", JSON.stringify(jsonData))
+                        .then(() => {
+                            return interaction.reply({ content: "Created a team", ephemeral: true })
+                        })
+                        .catch((ex) => {
+                            console.log(ex)
+                            return interaction.reply({ content: "An error has occured while creating a team", ephemeral: true })
+                        })
                 })
         })
-        .catch(() => {
-
+        .catch((ex) => {
+            console.log(ex)
             console.log("Couldn't read teams.json")
             return interaction.reply({ content: "An error has occured while creating a team", ephemeral: true })
         })
