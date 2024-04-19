@@ -1,4 +1,4 @@
-import {CommandInteraction, SlashCommandBuilder} from "discord.js";
+import {CommandInteraction, SlashCommandBuilder, ChannelType, PermissionFlags, PermissionsBitField} from "discord.js";
 
 import fs from "fs/promises";
 
@@ -53,11 +53,11 @@ export async function execute(interaction: CommandInteraction) {
         .then((data) => {
             const jsonData: Teams = JSON.parse(data.toString())
 
-            if (jsonData.teams.some((team) => team.owner_id == interaction.user.id)) {
-                return interaction.reply({ content: "You already have a team", ephemeral: true })
-            } else if (jsonData.teams.some((name) => name.team_name.trim().toLowerCase() == (interaction.options.data[0].value as string).trim().toLowerCase())) {
-                return interaction.reply( { content: "This team name already exists", ephemeral: true })
-            }
+            // if (jsonData.teams.some((team) => team.owner_id == interaction.user.id)) {
+            //     return interaction.reply({ content: "You already have a team", ephemeral: true })
+            // } else if (jsonData.teams.some((name) => name.team_name.trim().toLowerCase() == (interaction.options.data[0].value as string).trim().toLowerCase())) {
+            //     return interaction.reply( { content: "This team name already exists", ephemeral: true })
+            // }
 
             const randomGroup = `group${Math.floor(Math.random() * 6) + 1}`
 
@@ -79,6 +79,20 @@ export async function execute(interaction: CommandInteraction) {
 
                     fs.writeFile("./src/data/teams.json", JSON.stringify(jsonData))
                         .then(() => {
+                            interaction.guild.channels.create({
+                                name: interaction.options.data[0].value as string,
+                                type: ChannelType.GuildText,
+                                permissionOverwrites: [
+                                    {
+                                        id: interaction.guild.id,
+                                        deny: PermissionsBitField.Flags.ViewChannel
+                                    },
+                                    {
+                                        id: interaction.user.id,
+                                        allow: PermissionsBitField.Flags.ViewChannel
+                                    }
+                                ]
+                            })
                             return interaction.reply({ content: "Created a team", ephemeral: true })
                         })
                         .catch((ex) => {
@@ -92,4 +106,5 @@ export async function execute(interaction: CommandInteraction) {
             console.log("Couldn't read teams.json")
             return interaction.reply({ content: "An error has occured while creating a team", ephemeral: true })
         })
+    
 }
