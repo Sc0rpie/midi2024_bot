@@ -1,5 +1,7 @@
 import {CommandInteraction, SlashCommandBuilder, ChannelType, PermissionFlags, PermissionsBitField} from "discord.js";
 
+import { Team, Teams, Location, Group } from './types'
+
 import fs from "fs/promises";
 
 // get_hints (groupnum)
@@ -17,33 +19,6 @@ export const data = new SlashCommandBuilder()
     .setName('create_team')
     .setDescription('Creates a team with a specified name')
     .addStringOption(option => option.setName('team-name').setDescription('Team name').setRequired(true))
-
-type Team = {
-    owner_id: string;
-    team_name: string;
-    points: number;
-    locations_found: Array<string>;
-    unlocked_groups: Array<string>;
-    current_hints: Array<string>;
-    channel_id: string;
-}
-
-type Teams = {
-    teams: Array<Team>
-}
-
-type Location = {
-    id: string;
-    name: string;
-    points: number;
-    hint: string;
-    answer: string;
-}
-
-type Group = {
-    locations: Array<Location>;
-    amount_of_locations: number;
-}
 
 export async function execute(interaction: CommandInteraction) {
     // for debug
