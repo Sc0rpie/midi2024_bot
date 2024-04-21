@@ -25,6 +25,7 @@ type Team = {
     locations_found: Array<string>;
     unlocked_groups: Array<string>;
     current_hints: Array<string>;
+    channel_id: string;
 }
 
 type Teams = {
@@ -53,6 +54,7 @@ export async function execute(interaction: CommandInteraction) {
         .then((data) => {
             const jsonData: Teams = JSON.parse(data.toString())
 
+            // TODO: uncomment
             // if (jsonData.teams.some((team) => team.owner_id == interaction.user.id)) {
             //     return interaction.reply({ content: "You already have a team", ephemeral: true })
             // } else if (jsonData.teams.some((name) => name.team_name.trim().toLowerCase() == (interaction.options.data[0].value as string).trim().toLowerCase())) {
@@ -64,41 +66,44 @@ export async function execute(interaction: CommandInteraction) {
             fs.readFile("./src/data/locations.json")
                 .then((data) => {
                     const locationsJson = JSON.parse(data.toString())
-                    const randomLocation = Math.floor(Math.random() * locationsJson[randomGroup].amount_of_locations as number)
+                    const randomLocationNum = Math.floor(Math.random() * locationsJson[randomGroup].amount_of_locations as number)
+                    const randomLocationId = `${randomGroup}_${randomLocationNum + 1}`
 
-                    console.log(locationsJson[randomGroup].locations[randomLocation].hint)
+                    interaction.guild?.channels.create({
+                        name: interaction.options.data[0].value as string,
+                        type: ChannelType.GuildText,
+                        permissionOverwrites: [
+                            {
+                                id: interaction.guild.id,
+                                deny: PermissionsBitField.Flags.ViewChannel
+                            },
+                            {
+                                id: interaction.user.id,
+                                allow: PermissionsBitField.Flags.ViewChannel
+                            }
+                        ]
+                    }).then((channel): void => {
+                        jsonData.teams.push({
+                            owner_id: interaction.user.id,
+                            team_name: interaction.options.data[0].value as string,
+                            points: 0,
+                            locations_found: [],
+                            unlocked_groups: [ randomGroup ],
+                            current_hints: [ randomLocationId ],
+                            channel_id: channel.id
+                        })
 
-                    jsonData.teams.push({
-                        owner_id: interaction.user.id,
-                        team_name: interaction.options.data[0].value as string,
-                        points: 0,
-                        locations_found: [],
-                        unlocked_groups: [ randomGroup ],
-                        current_hints: [ `${randomGroup}_${randomLocation + 1}` ]
-                    })
+                        channel.send({ content: `Your first hint: ${locationsJson[randomGroup].locations.filter((location: Location) => location.id == randomLocationId)[0].hint}`} )
 
-                    fs.writeFile("./src/data/teams.json", JSON.stringify(jsonData))
-                        .then(() => {
-                            interaction.guild.channels.create({
-                                name: interaction.options.data[0].value as string,
-                                type: ChannelType.GuildText,
-                                permissionOverwrites: [
-                                    {
-                                        id: interaction.guild.id,
-                                        deny: PermissionsBitField.Flags.ViewChannel
-                                    },
-                                    {
-                                        id: interaction.user.id,
-                                        allow: PermissionsBitField.Flags.ViewChannel
-                                    }
-                                ]
+                        fs.writeFile("./src/data/teams.json", JSON.stringify(jsonData))
+                            .then(() => {
+                                return interaction.reply({ content: "Created a team", ephemeral: true })
                             })
-                            return interaction.reply({ content: "Created a team", ephemeral: true })
-                        })
-                        .catch((ex) => {
-                            console.log(ex)
-                            return interaction.reply({ content: "An error has occured while creating a team", ephemeral: true })
-                        })
+                            .catch((ex) => {
+                                console.log(ex)
+                                return interaction.reply({ content: "An error has occured while creating a team", ephemeral: true })
+                            })
+                    })
                 })
         })
         .catch((ex) => {
