@@ -25,6 +25,14 @@ export async function execute(interaction: CommandInteraction) {
     const id = interaction.options.data[1].value as string;
     const group = id.split('_')[0];
 
+    const member = await interaction.guild?.members.cache.get(interaction.user.id);
+
+    const hasSpecificRole = member?.roles.cache.has('1232411354359533618')
+
+    if (!hasSpecificRole) {
+        return interaction.reply({ content: "You do not have the required role to perform this action.", ephemeral: true });
+    }   
+
     try {
         const locationsData = await fs.readFile("./src/data/locations.json");
         const locationsJson = JSON.parse(locationsData.toString());
