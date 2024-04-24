@@ -65,6 +65,7 @@ export async function execute(interaction: CommandInteraction) {
                             locations_found: [],
                             unlocked_groups: [ randomGroup ],
                             current_hints: [ randomLocationId ],
+                            skips: [0, 0, 0, 0, 0, 0],
                             channel_id: channel.id
                         })
 

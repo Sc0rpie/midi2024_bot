@@ -5,6 +5,7 @@ export type Team = {
     locations_found: Array<string>;
     unlocked_groups: Array<string>;
     current_hints: Array<string>;
+    skips: Array<number>;
     channel_id: string;
 }
 
