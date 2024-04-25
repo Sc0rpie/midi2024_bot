@@ -3,6 +3,7 @@ import {CommandInteraction, SlashCommandBuilder, ChannelType, PermissionFlags, P
 import { Team, Teams, Location, Group } from './types'
 
 import fs from "fs/promises";
+import { generateHintEmbed } from "../utils/listHintEmbed";
 
 // get_hints (groupnum)
 /*
@@ -25,6 +26,7 @@ export async function execute(interaction: CommandInteraction) {
     console.log(interaction.options.data[0])
     console.log(interaction.user.id)
 
+    // TODO Try/catch
     fs.readFile("./src/data/teams.json")
         .then((data) => {
             const jsonData: Teams = JSON.parse(data.toString())
@@ -57,7 +59,7 @@ export async function execute(interaction: CommandInteraction) {
                                 allow: PermissionsBitField.Flags.ViewChannel
                             }
                         ]
-                    }).then((channel): void => {
+                    }).then(async (channel): Promise<void> => {
                         jsonData.teams.push({
                             owner_id: interaction.user.id,
                             team_name: interaction.options.data[0].value as string,
@@ -69,7 +71,9 @@ export async function execute(interaction: CommandInteraction) {
                             channel_id: channel.id
                         })
 
-                        channel.send({ content: `Your first hint: ${locationsJson[randomGroup].locations.filter((location: Location) => location.id == randomLocationId)[0].hint}`} )
+                        const embed = await generateHintEmbed(randomGroup, jsonData, interaction)
+                        channel.send({ embeds: [embed] })
+                        // channel.send({ content: `Your first hint: ${locationsJson[randomGroup].locations.filter((location: Location) => location.id == randomLocationId)[0].hint}`} )
 
                         fs.writeFile("./src/data/teams.json", JSON.stringify(jsonData))
                             .then(() => {
@@ -82,10 +86,12 @@ export async function execute(interaction: CommandInteraction) {
                     })
                 })
         })
+        
         .catch((ex) => {
             console.log(ex)
             console.log("Couldn't read teams.json")
             return interaction.reply({ content: "An error has occured while creating a team", ephemeral: true })
         })
+    
     
 }
