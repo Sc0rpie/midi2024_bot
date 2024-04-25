@@ -26,17 +26,20 @@ export async function execute(interaction: CommandInteraction) {
     console.log(interaction.options.data[0])
     console.log(interaction.user.id)
 
+    if ((interaction.options.data[0].value as string).length > 100) {
+        return interaction.reply({ content: "Team name is too long", ephemeral: true })
+    }
+
     // TODO Try/catch
     fs.readFile("./src/data/teams.json")
         .then((data) => {
             const jsonData: Teams = JSON.parse(data.toString())
 
-            // TODO: uncomment
-            // if (jsonData.teams.some((team) => team.owner_id == interaction.user.id)) {
-            //     return interaction.reply({ content: "You already have a team", ephemeral: true })
-            // } else if (jsonData.teams.some((name) => name.team_name.trim().toLowerCase() == (interaction.options.data[0].value as string).trim().toLowerCase())) {
-            //     return interaction.reply( { content: "This team name already exists", ephemeral: true })
-            // }
+            if (jsonData.teams.some((team) => team.owner_id == interaction.user.id)) {
+                return interaction.reply({ content: "You already have a team", ephemeral: true })
+            } else if (jsonData.teams.some((name) => name.team_name.trim().toLowerCase() == (interaction.options.data[0].value as string).trim().toLowerCase())) {
+                return interaction.reply( { content: "This team name already exists", ephemeral: true })
+            }
 
             const randomGroup = `group${Math.floor(Math.random() * 6) + 1}`
 

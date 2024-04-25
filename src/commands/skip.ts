@@ -1,6 +1,7 @@
 import { CommandInteraction, SlashCommandBuilder } from "discord.js";
 import fs from 'fs';
 import { Team, Teams, Location } from './types';
+import { generateHintEmbed } from "../utils/listHintEmbed";
 
 export const data = new SlashCommandBuilder()
     .setName('skip')
@@ -50,7 +51,9 @@ export async function execute(interaction: CommandInteraction) {
 
     // Serialize the modified teams JSON and write it back to the file
     await fs.promises.writeFile("./src/data/teams.json", JSON.stringify(teamsJson, null, 4));
+    
+    const embed = await generateHintEmbed(group, teamsJson, interaction);
 
     // Send the location hint to the user
-    return interaction.reply({ content: randomLocation.hint, ephemeral: true });
+    return interaction.reply({ embeds: [embed]});
 }

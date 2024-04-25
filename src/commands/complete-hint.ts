@@ -126,7 +126,6 @@ export async function execute(interaction: CommandInteraction) {
               Math.floor(Math.random() * availableHintsInGroup.length)
             ];
           userTeam.current_hints.push(extraHint.id);
-          console.log(extraHint);
           if (!userTeam.unlocked_groups.includes(nextGroup)) {
             userTeam.unlocked_groups.push(nextGroup);
           }
